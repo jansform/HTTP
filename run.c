@@ -169,6 +169,8 @@ void url_decode(char *dst, const char *src) {
         if (*src == '%' && isxdigit((unsigned char)src[1]) && isxdigit((unsigned char)src[2])) {
             // 取出两个十六进制字符，转为数字
             char hex[3] = {src[1], src[2], '\0'};
+            /*把 hex 里的两位十六进制字符串（如 "20"）转成十进制整数（32），
+            再强制转换为 char 类型，赋值给 *dst。*/
             *dst++ = (char)strtol(hex, NULL, 16);
             src += 3;
         } else if (*src == '+') {
@@ -301,7 +303,12 @@ void send_file(int sockfd, char *path){
 }
 
 void run(void *arg){
+    // 获取客户端文件描述符
     int c_fd = *(int*)arg;
+    struct sockaddr_in addr;
+    socklen_t addr_len = sizeof(addr);
+    getpeername(c_fd, (struct sockaddr*)&addr, &addr_len);
+
     free(arg);
     char req[BUFFER_SIZE];
     ssize_t len = recv(c_fd, req, sizeof(req) - 1, 0);
@@ -312,18 +319,53 @@ void run(void *arg){
     req[len] = '\0';
     HttpRequest parse = {0};
     parse_http_request(req, &parse);
-    
+
+    // 获取当前时间字符串
+    time_t now = time(NULL);
+    struct tm *tm_info = localtime(&now);
+    char time_str[32];
+    strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", tm_info);
+
+    // 获取客户端IP和端口
+    char ip[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &addr.sin_addr, ip, sizeof(ip));
+    int port = ntohs(addr.sin_port);
+
+    // 日志文件写入
+    FILE *logf = fopen("server.log", "a");
+    if (logf) {
+        fprintf(logf, "[%s] %s:%d 请求 %s %s\n", time_str, ip, port, parse.method, parse.path);
+        fclose(logf);
+    }
+
     // 检查是否为favicon.ico请求
     if(strcmp(parse.path, "/favicon.ico") == 0){
         http_response(c_fd, "404 Not Found", "text/html", "");
+        // 记录响应
+        logf = fopen("server.log", "a");
+        if (logf) {
+            fprintf(logf, "[%s] %s:%d 响应 404 Not Found\n", time_str, ip, port);
+            fclose(logf);
+        }
         close(c_fd);
         return;
     }
 
     if(strcmp(parse.method, "GET") == 0){
         send_file(c_fd, parse.path);
+        // 记录响应的文件名
+        logf = fopen("server.log", "a");
+        if (logf) {
+            fprintf(logf, "[%s] %s:%d 响应文件: %s\n", time_str, ip, port, parse.path);
+            fclose(logf);
+        }
     } else {
         http_response(c_fd, "405 Method Not Allowed", "text/html", "<h1>405 Method Not Allowed</h1>");
+        logf = fopen("server.log", "a");
+        if (logf) {
+            fprintf(logf, "[%s] %s:%d 响应 405 Method Not Allowed\n", time_str, ip, port);
+            fclose(logf);
+        }
     }
 
     if(strstr(req, "Connection: close")){
