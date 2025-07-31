@@ -160,30 +160,17 @@
 
 #include "setting.h"
 #include "run.h"
-#include <libgen.h>
+#include <libgen.h>  
 #include <ctype.h>  // 添加ctype.h用于字符处理
 
 // URL解码函数
 void url_decode(char *dst, const char *src) {
-    char a, b;
     while (*src) {
-        if ((*src == '%') &&
-            ((a = src[1]) && (b = src[2])) &&
-            (isxdigit(a) && isxdigit(b))) {
-            if (a >= 'a')
-                a -= 'a'-'A';
-            if (a >= 'A')
-                a -= ('A' - 10);
-            else
-                a -= '0';
-            if (b >= 'a')
-                b -= 'a'-'A';
-            if (b >= 'A')
-                b -= ('A' - 10);
-            else
-                b -= '0';
-            *dst++ = 16*a+b;
-            src+=3;
+        if (*src == '%' && isxdigit((unsigned char)src[1]) && isxdigit((unsigned char)src[2])) {
+            // 取出两个十六进制字符，转为数字
+            char hex[3] = {src[1], src[2], '\0'};
+            *dst++ = (char)strtol(hex, NULL, 16);
+            src += 3;
         } else if (*src == '+') {
             *dst++ = ' ';
             src++;
@@ -191,7 +178,7 @@ void url_decode(char *dst, const char *src) {
             *dst++ = *src++;
         }
     }
-    *dst++ = '\0';
+    *dst = '\0';
 }
 
 int isvalid_path(char *path){
