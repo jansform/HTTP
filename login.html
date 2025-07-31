@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音乐天堂 - 登录</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1db954;
+            --secondary-color: #191414;
+            --light-color: #ffffff;
+            --dark-color: #121212;
+            --gray-color: #b3b3b3;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--dark-color);
+            color: var(--light-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 导航栏 */
+        nav {
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 25px;
+        }
+        
+        .nav-links a {
+            color: var(--light-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary-color);
+        }
+        
+        /* 登录容器 */
+        .login-container {
+            display: flex;
+            flex: 1;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        
+        .login-box {
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .login-header p {
+            color: var(--gray-color);
+        }
+        
+        .login-form .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .login-form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .login-form input {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            color: var(--light-color);
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .login-form input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background-color: rgba(29, 185, 84, 0.1);
+        }
+        
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .remember-me {
+            display: flex;
+            align-items: center;
+        }
+        
+        .remember-me input {
+            width: auto;
+            margin-right: 8px;
+        }
+        
+        .forgot-password a {
+            color: var(--gray-color);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .forgot-password a:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: var(--light-color);
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .login-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(29, 185, 84, 0.4);
+        }
+        
+        .social-login {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .social-login p {
+            color: var(--gray-color);
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .social-login p::before,
+        .social-login p::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 30%;
+            height: 1px;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .social-login p::before {
+            left: 0;
+        }
+        
+        .social-login p::after {
+            right: 0;
+        }
+        
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .social-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .social-icon:hover {
+            background-color: var(--primary-color);
+            transform: scale(1.1);
+        }
+        
+        .register-link {
+            text-align: center;
+            color: var(--gray-color);
+        }
+        
+        .register-link a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .login-box {
+                padding: 30px;
+            }
+            
+            .login-header h1 {
+                font-size: 28px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            nav {
+                padding: 15px;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .login-box {
+                padding: 25px 20px;
+            }
+            
+            .login-header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav>
+        <div class="logo">音乐天堂</div>
+        <div class="nav-links">
+            <a href="#">首页</a>
+            <a href="#">发现</a>
+            <a href="#">歌单</a>
+            <a href="#">排行榜</a>
+            <a href="#">歌手</a>
+        </div>
+    </nav>
+    
+    <!-- 登录容器 -->
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>欢迎回来</h1>
+                <p>登录您的账户继续享受音乐</p>
+            </div>
+            
+            <form class="login-form">
+                <div class="form-group">
+                    <label for="email">电子邮箱</label>
+                    <input type="email" id="email" placeholder="请输入您的电子邮箱" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" placeholder="请输入您的密码" required>
+                </div>
+                
+                <div class="remember-forgot">
+                    <div class="remember-me">
+                        <input type="checkbox" id="remember">
+                        <label for="remember">记住我</label>
+                    </div>
+                    <div class="forgot-password">
+                        <a href="#">忘记密码?</a>
+                    </div>
+                </div>
+                
+                <button type="submit" class="login-btn">登录</button>
+                
+                <div class="social-login">
+                    <p>或使用以下方式登录</p>
+                    <div class="social-icons">
+                        <div class="social-icon">
+                            <i class="fab fa-google"></i>
+                        </div>
+                        <div class="social-icon">
+                            <i class="fab fa-apple"></i>
+                        </div>
+                        <div class="social-icon">
+                            <i class="fab fa-weixin"></i>
+                        </div>
+                        <div class="social-icon">
+                            <i class="fab fa-qq"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="register-link">
+                    <p>还没有账户? <a href="register.html">立即注册</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 表单提交处理
+        const loginForm = document.querySelector('.login-form');
+        
+        // 定义正确的邮箱和密码（实际应用中应该从服务器验证）
+        const CORRECT_EMAIL = "zhangs@qq.com";
+        const CORRECT_PASSWORD = "zj666";
+        
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('remember').checked;
+            
+            // 验证邮箱和密码
+            if(email === CORRECT_EMAIL && password === CORRECT_PASSWORD) {
+                // 登录成功，跳转到music.html
+                window.location.href = 'music.html';
+            } else {
+                // 登录失败，显示错误消息
+                alert('邮箱或密码错误，请重试！');
+            }
+        });
+        
+        // 社交图标点击效果
+        const socialIcons = document.querySelectorAll('.social-icon');
+        socialIcons.forEach(icon => {
+            icon.addEventListener('click', function() {
+                const platform = this.querySelector('i').classList[1].split('-')[1];
+                alert(`您选择了通过${platform}登录`);
+            });
+        });
+    </script>
+</body>
+</html>

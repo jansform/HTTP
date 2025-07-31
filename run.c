@@ -1,0 +1,348 @@
+// #include "setting.h"
+// #include "run.h"
+// #include <libgen.h>
+
+// int isvalid_path(char *path){
+//     if(strstr(path,"../")||strstr(path,"..\\")||strstr(path,"./")||strstr(path,".\\")){
+//         return 0;
+//     }
+//     return 1;
+// }
+
+// // 获取文件扩展名对应的MIME类型
+// char *get_mime_type(char *path) {
+//     const char *dot = strrchr(path, '.');
+//     if (!dot) return "application/octet-stream";
+    
+//     if (strcmp(dot, ".html") == 0 || strcmp(dot, ".htm") == 0) 
+//         return "text/html";
+//     if (strcmp(dot, ".txt") == 0) 
+//         return "text/plain";
+//     if (strcmp(dot, ".jpg") == 0 || strcmp(dot, ".jpeg") == 0) 
+//         return "image/jpeg";
+//     if (strcmp(dot, ".png") == 0) 
+//         return "image/png";
+//     if (strcmp(dot, ".gif") == 0) 
+//         return "image/gif";
+//     if (strcmp(dot, ".css") == 0) 
+//         return "text/css";
+//     if (strcmp(dot, ".js") == 0) 
+//         return "application/javascript";
+//     if (strcmp(dot, ".json") == 0) 
+//         return "application/json";
+    
+//     return "application/octet-stream";
+// }
+
+// //解析http请求
+// void parse_http_request(char *req,HttpRequest *parse){
+//     //解析第一行
+//     sscanf(req, "%15s %1023s %15s",parse->method,parse->path,parse->version);
+
+//     //解析请求头
+//     char *host_start=strstr(req,"Host:");
+//     if(host_start){
+//         host_start+=5;
+//         char *host_end=strchr(host_start,'\r');
+//         if(host_end){
+//             strncpy(parse->host,host_start,host_end-host_start);
+//             parse->host[host_end-host_start]='\0';
+//         }
+//     }
+// }
+
+// void http_response(int sockfd,char *status,char *type,char *body){
+//     //传递响应头
+//     char headers[1024];
+//     snprintf(headers,sizeof(headers),
+//     "HTTP/1.1 200 %s\r\n"
+//     "Content-Type: %s\r\n"
+//     "Content-Length: %ld\r\n"
+//     "Connection: keep-alive\r\n\r\n",
+//     status,type,strlen(body));
+//     send(sockfd,headers,strlen(headers),0);
+//     send(sockfd,body,strlen(body),0);
+// }
+
+// void send_file(int sockfd,char *path){
+//     // 默认页面处理
+//     if (strcmp(path, "/") == 0) {
+//         path = "/login.html";
+//     }
+
+//     // 安全路径检查
+//     if (!isvalid_path(path)) {
+//         http_response(sockfd, "403 Forbidden", "text/html", "<h1>403 Forbidden</h1>");
+//         return;
+//     }
+
+//     // 构建完整路径
+//     char full_path[512];
+//     memmove(full_path, path+1, strlen(path));
+//     //网站根目录
+//     // char full_path[512]="index.html"; 
+//     int fd=open(full_path,O_RDONLY);
+//     //文件不存在时
+//     if(fd<0){
+//         if (errno == ENOENT) {
+//             http_response(sockfd, "404 Not Found", "text/html", "<h1>404 Not Found</h1>");
+//         } else if (errno == EACCES) {
+//             http_response(sockfd, "403 Forbidden", "text/html", "<h1>403 Forbidden</h1>");
+//         } else {
+//             http_response(sockfd, "500 Internal Server Error", "text/html", "<h1>500 Internal Server Error</h1>");
+//         }
+//         return;
+//     }
+//     //获取文件信息
+//     struct stat st;
+//     fstat(fd,&st);
+    
+//     //发送http头
+//     char headers[1024];
+//     snprintf(headers,sizeof(headers),
+//     "HTTP/1.1 200 OK\r\n"
+//     "Content-Type: %s\r\n"
+//     "Content-Length: %ld\r\n"
+//     "Connection: keep-alive\r\n\r\n",
+//     get_mime_type(full_path),st.st_size);
+//     send(sockfd,headers,strlen(headers),0);
+
+    
+//     // char buf[BUFFER_SIZE];
+//     // size_t len;
+//     // while((len=read(fd,buf,sizeof(buf)))>0){
+//     //     send(sockfd,buf,len,0);
+//     // }
+//     //使用sendfile发送文件内容
+//     ssize_t len;
+//     off_t offset=0;
+//     len=sendfile(sockfd,fd,&offset,st.st_size);
+//     if(len<0){
+//         printf("发送失败\n");
+//     }
+//     close(fd);
+// }
+
+// void run(void *arg){
+//     int c_fd=*(int*)arg;
+//     free(arg);
+//     char req[BUFFER_SIZE];
+//     ssize_t len=recv(c_fd,req,sizeof(req)-1,0);
+//     if(len<=0){
+//         close(c_fd);
+//         return;
+//     }
+//     req[len]='\0';
+//     HttpRequest parse={0};
+//     parse_http_request(req,&parse);
+//     //printf("[%s] %s %s\n",parse.host,parse.method,parse.path);
+
+//     // 检查是否为favicon.ico请求
+//     if(strcmp(parse.path, "/favicon.ico") == 0){
+//         http_response(c_fd, "404 Not Found", "text/html", "");
+//         close(c_fd);
+//         return;
+//     }
+
+//     if(strcmp(parse.method,"GET")==0){
+//         send_file(c_fd,parse.path);
+//     }else{
+//         http_response(c_fd,"405 Method Not Allowed","text/html","<h1>405 Method Not Allowed</h1>");
+//     }
+
+//     if(strstr(req,"Connection: close")){
+//         close(c_fd);
+//         return;
+//     }
+//     close(c_fd);
+//     return;
+// }
+
+#include "setting.h"
+#include "run.h"
+#include <libgen.h>
+#include <ctype.h>  // 添加ctype.h用于字符处理
+
+// URL解码函数
+void url_decode(char *dst, const char *src) {
+    char a, b;
+    while (*src) {
+        if ((*src == '%') &&
+            ((a = src[1]) && (b = src[2])) &&
+            (isxdigit(a) && isxdigit(b))) {
+            if (a >= 'a')
+                a -= 'a'-'A';
+            if (a >= 'A')
+                a -= ('A' - 10);
+            else
+                a -= '0';
+            if (b >= 'a')
+                b -= 'a'-'A';
+            if (b >= 'A')
+                b -= ('A' - 10);
+            else
+                b -= '0';
+            *dst++ = 16*a+b;
+            src+=3;
+        } else if (*src == '+') {
+            *dst++ = ' ';
+            src++;
+        } else {
+            *dst++ = *src++;
+        }
+    }
+    *dst++ = '\0';
+}
+
+int isvalid_path(char *path){
+    if(strstr(path,"../")||strstr(path,"..\\")||strstr(path,"./")||strstr(path,".\\")){
+        return 0;
+    }
+    return 1;
+}
+
+// 获取文件扩展名对应的MIME类型
+char *get_mime_type(char *path) {
+    const char *dot = strrchr(path, '.');
+    if (!dot) return "application/octet-stream";
+    
+    if (strcmp(dot, ".html") == 0 || strcmp(dot, ".htm") == 0) 
+        return "text/html";
+    if (strcmp(dot, ".txt") == 0) 
+        return "text/plain";
+    if (strcmp(dot, ".jpg") == 0 || strcmp(dot, ".jpeg") == 0) 
+        return "image/jpeg";
+    if (strcmp(dot, ".png") == 0) 
+        return "image/png";
+    if (strcmp(dot, ".gif") == 0) 
+        return "image/gif";
+    if (strcmp(dot, ".css") == 0) 
+        return "text/css";
+    if (strcmp(dot, ".js") == 0) 
+        return "application/javascript";
+    if (strcmp(dot, ".json") == 0) 
+        return "application/json";
+    
+    return "application/octet-stream";
+}
+
+//解析http请求
+void parse_http_request(char *req, HttpRequest *parse){
+    //解析第一行
+    char raw_path[1024];
+    sscanf(req, "%15s %1023s %15s", parse->method, raw_path, parse->version);
+    
+    // URL解码路径
+    url_decode(parse->path, raw_path);
+
+    //解析请求头
+    char *host_start = strstr(req, "Host:");
+    if(host_start){
+        host_start += 5;
+        char *host_end = strchr(host_start, '\r');
+        if(host_end){
+            strncpy(parse->host, host_start, host_end - host_start);
+            parse->host[host_end - host_start] = '\0';
+        }
+    }
+}
+
+void http_response(int sockfd, char *status, char *type, char *body){
+    //传递响应头
+    char headers[1024];
+    snprintf(headers, sizeof(headers),
+    "HTTP/1.1 200 %s\r\n"
+    "Content-Type: %s\r\n"
+    "Content-Length: %ld\r\n"
+    "Connection: keep-alive\r\n\r\n",
+    status, type, strlen(body));
+    send(sockfd, headers, strlen(headers), 0);
+    send(sockfd, body, strlen(body), 0);
+}
+
+void send_file(int sockfd, char *path){
+    // 默认页面处理
+    if (strcmp(path, "/") == 0) {
+        path = "/login.html";
+    }
+
+    // 安全路径检查
+    if (!isvalid_path(path)) {
+        http_response(sockfd, "403 Forbidden", "text/html", "<h1>403 Forbidden</h1>");
+        return;
+    }
+
+    // 构建完整路径
+    char full_path[512];
+    memmove(full_path, path + 1, strlen(path));
+    
+    int fd = open(full_path, O_RDONLY);
+    //文件不存在时
+    if(fd < 0){
+        if (errno == ENOENT) {
+            http_response(sockfd, "404 Not Found", "text/html", "<h1>404 Not Found</h1>");
+        } else if (errno == EACCES) {
+            http_response(sockfd, "403 Forbidden", "text/html", "<h1>403 Forbidden</h1>");
+        } else {
+            http_response(sockfd, "500 Internal Server Error", "text/html", "<h1>500 Internal Server Error</h1>");
+        }
+        return;
+    }
+    
+    //获取文件信息
+    struct stat st;
+    fstat(fd, &st);
+    
+    //发送http头
+    char headers[1024];
+    snprintf(headers, sizeof(headers),
+    "HTTP/1.1 200 OK\r\n"
+    "Content-Type: %s\r\n"
+    "Content-Length: %ld\r\n"
+    "Connection: keep-alive\r\n\r\n",
+    get_mime_type(full_path), st.st_size);
+    send(sockfd, headers, strlen(headers), 0);
+
+    //使用sendfile发送文件内容
+    ssize_t len;
+    off_t offset = 0;
+    len = sendfile(sockfd, fd, &offset, st.st_size);
+    if(len < 0){
+        printf("发送失败\n");
+    }
+    close(fd);
+}
+
+void run(void *arg){
+    int c_fd = *(int*)arg;
+    free(arg);
+    char req[BUFFER_SIZE];
+    ssize_t len = recv(c_fd, req, sizeof(req) - 1, 0);
+    if(len <= 0){
+        close(c_fd);
+        return;
+    }
+    req[len] = '\0';
+    HttpRequest parse = {0};
+    parse_http_request(req, &parse);
+    
+    // 检查是否为favicon.ico请求
+    if(strcmp(parse.path, "/favicon.ico") == 0){
+        http_response(c_fd, "404 Not Found", "text/html", "");
+        close(c_fd);
+        return;
+    }
+
+    if(strcmp(parse.method, "GET") == 0){
+        send_file(c_fd, parse.path);
+    } else {
+        http_response(c_fd, "405 Method Not Allowed", "text/html", "<h1>405 Method Not Allowed</h1>");
+    }
+
+    if(strstr(req, "Connection: close")){
+        close(c_fd);
+        return;
+    }
+    close(c_fd);
+    return;
+}
