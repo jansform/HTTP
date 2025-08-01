@@ -55,19 +55,23 @@ int main(int argc, char const *argv[])
 
                 struct epoll_event ev;
                 ev.data.fd=new_fd;
-                ev.events=EPOLLIN;
-                
+                ev.events=EPOLLIN | EPOLLRDHUP | EPOLLHUP | EPOLLERR;
                 //添加客户端套接字
                 epoll_ctl(ep_fd,EPOLL_CTL_ADD,new_fd,&ev);
-            }else if(events[i].events&EPOLLIN){
+                continue;
+            }
+            // 优先处理断开和错误事件
+            if(events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)){
+                printf("断开 %d (EPOLL事件)\n",fd);
+                epoll_ctl(ep_fd,EPOLL_CTL_DEL,fd,NULL);
+                close(fd);
+                continue;
+            }
+            // 只处理纯EPOLLIN
+            if(events[i].events&EPOLLIN){
                 int no_read=0;
                 ioctl(fd,FIONREAD,&no_read);
-                if(no_read<=0){
-                    //客户端断开连接
-                    printf("断开 %d\n",fd);
-                    epoll_ctl(ep_fd,EPOLL_CTL_DEL,fd,NULL);
-                    close(fd);
-                }else{
+                if(no_read>0){
                     int *client_fd=malloc(sizeof(int));
                     *client_fd=fd;
                     // pthread_t tid;
@@ -76,6 +80,10 @@ int main(int argc, char const *argv[])
                     threadpool_add_task(pool,run,client_fd);
                     //删除客户端套接字
                     epoll_ctl(ep_fd,EPOLL_CTL_DEL,fd,NULL);
+                }else{
+                    printf("断开 %d\n",fd);
+                    epoll_ctl(ep_fd,EPOLL_CTL_DEL,fd,NULL);
+                    close(fd);
                 }
             }
         }
