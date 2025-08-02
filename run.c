@@ -211,7 +211,8 @@ char *get_mime_type(char *path) {
         return "application/javascript";
     if (strcmp(dot, ".json") == 0) 
         return "application/json";
-    
+    if (strcmp(dot, ".mp3") == 0)
+        return "audio/mpeg";
     return "application/octet-stream";
 }
 

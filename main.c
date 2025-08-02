@@ -11,7 +11,7 @@ int main(int argc, char const *argv[])
     //创建套接字
     int s_fd=socket(AF_INET,SOCK_STREAM,0);
 
-    //设置端口复用
+    //设置端口复用,防止端口被占用,0表示关闭,1表示开启
     int opt = 1;
     if (setsockopt(s_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
         perror("setsockopt(SO_REUSEADDR) failed");
