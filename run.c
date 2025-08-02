@@ -292,12 +292,17 @@ void send_file(int sockfd, char *path){
     get_mime_type(full_path), st.st_size);
     send(sockfd, headers, strlen(headers), 0);
 
-    //使用sendfile发送文件内容
-    ssize_t len;
+    // 循环使用sendfile发送超大文件内容
+    ssize_t sent = 0;
     off_t offset = 0;
-    len = sendfile(sockfd, fd, &offset, st.st_size);
-    if(len < 0){
-        printf("发送失败\n");
+    while (sent < st.st_size) {
+        ssize_t n = sendfile(sockfd, fd, &offset, st.st_size - sent);
+        if (n <= 0) {
+            if (errno == EINTR) continue; // 被信号中断，重试
+            printf("发送失败\n");
+            break;
+        }
+        sent += n;
     }
     close(fd);
 }

@@ -42,7 +42,6 @@ ThreadPool *threadpool_create(int thread_count, int max_queue_size) {
             return NULL;
         }
     }
-
     // 返回线程池
     return pool;
 }
