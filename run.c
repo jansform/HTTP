@@ -331,10 +331,23 @@ void run(void *arg){
     char time_str[32];
     strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", tm_info);
 
-    // 获取客户端IP和端口
-    char ip[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &addr.sin_addr, ip, sizeof(ip));
+    // 获取客户端IP和端口，优先从X-Forwarded-For头部获取
+    // 代理服务器发送的请求头中包含X-Forwarded-For字段，记录客户端的真实IP
+    char ip[INET_ADDRSTRLEN] = {0};
     int port = ntohs(addr.sin_port);
+    char *xff = strstr(req, "X-Forwarded-For:");
+    if (xff) {
+        xff += strlen("X-Forwarded-For:");
+        while (*xff == ' ') xff++;
+        char *end = strchr(xff, '\r');
+        if (end && end - xff < sizeof(ip)) {
+            strncpy(ip, xff, end - xff);
+            ip[end - xff] = '\0';
+        }
+    }
+    if (ip[0] == 0) {
+        inet_ntop(AF_INET, &addr.sin_addr, ip, sizeof(ip));
+    }
 
     // 日志文件写入
     FILE *logf = fopen("server.log", "a");

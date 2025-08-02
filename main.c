@@ -5,7 +5,7 @@
 int main(int argc, char const *argv[])
 {   
     //创建线程池
-    ThreadPool *pool=threadpool_create(4,10);
+    ThreadPool *pool=threadpool_create(6,20);
     //创建epoll实例
     int ep_fd=epoll_create1(0);
     //创建套接字
@@ -21,7 +21,7 @@ int main(int argc, char const *argv[])
     //监听文件描述符的事件类型
     struct epoll_event event;
     event.data.fd=s_fd;
-    event.events=EPOLLIN;
+    event.events=EPOLLIN;   //水平触发
     //加入实例
     epoll_ctl(ep_fd,EPOLL_CTL_ADD,s_fd,&event);
     //创建地址
