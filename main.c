@@ -5,13 +5,13 @@
 int main(int argc, char const *argv[])
 {   
     //创建线程池
-    ThreadPool *pool=threadpool_create(6,20);
+    ThreadPool *pool=threadpool_create(4,10);
     //创建epoll实例
     int ep_fd=epoll_create1(0);
     //创建套接字
     int s_fd=socket(AF_INET,SOCK_STREAM,0);
 
-    //设置端口复用,防止端口被占用,0表示关闭,1表示开启
+    //设置端口复用
     int opt = 1;
     if (setsockopt(s_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
         perror("setsockopt(SO_REUSEADDR) failed");
@@ -21,7 +21,7 @@ int main(int argc, char const *argv[])
     //监听文件描述符的事件类型
     struct epoll_event event;
     event.data.fd=s_fd;
-    event.events=EPOLLIN;   //水平触发
+    event.events=EPOLLIN;
     //加入实例
     epoll_ctl(ep_fd,EPOLL_CTL_ADD,s_fd,&event);
     //创建地址
@@ -61,14 +61,15 @@ int main(int argc, char const *argv[])
                 continue;
             }
             // 优先处理断开和错误事件
-            if(events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)){
-                printf("断开 %d (EPOLL事件)\n",fd);
-                epoll_ctl(ep_fd,EPOLL_CTL_DEL,fd,NULL);
-                close(fd);
-                continue;
-            }
+            // if(events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)){
+            //     printf("断开 %d (EPOLL事件)\n",fd);
+            //     epoll_ctl(ep_fd,EPOLL_CTL_DEL,fd,NULL);
+            //     close(fd);
+            //     continue;
+            // }
             // 只处理纯EPOLLIN
-            if(events[i].events&EPOLLIN){
+            //if(events[i].events&EPOLLIN){
+            else{
                 int no_read=0;
                 ioctl(fd,FIONREAD,&no_read);
                 if(no_read>0){
@@ -78,13 +79,10 @@ int main(int argc, char const *argv[])
                     // pthread_create(&tid,NULL,run,client_fd);
                     // pthread_detach(tid);
                     threadpool_add_task(pool,run,client_fd);
-                    //删除客户端套接字
-                    epoll_ctl(ep_fd,EPOLL_CTL_DEL,fd,NULL);
-                }else{
-                    printf("断开 %d\n",fd);
-                    epoll_ctl(ep_fd,EPOLL_CTL_DEL,fd,NULL);
-                    close(fd);
                 }
+                perror("bad descriptor");
+                //删除客户端套接字
+                epoll_ctl(ep_fd,EPOLL_CTL_DEL,fd,NULL);
             }
         }
     }
