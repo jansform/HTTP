@@ -2,11 +2,12 @@
 #define RUN_H
 
 typedef struct{
-    char method[256];   //GET/POST
-    char path[256];     //index.html
-    char version[256];  //HTTP/1.1
-    char host[256];     //localhost
-}HttpRequest;
+    char method[256];
+    char path[256];
+    char version[256];
+    char host[256];
+    int keep_alive;  // 新增：是否保持连接
+} HttpRequest;
 
 void url_decode(char *dst, const char *src);
 
@@ -18,7 +19,7 @@ void parse_http_request(char *request, HttpRequest *parse);
 
 void http_response(int sockfd,char *status,char *type,char *body);
 
-void send_file(int sockfd,char *path);
+void send_file(int sockfd, char *path, int keep_alive);
 
 void run(void *arg);
 
